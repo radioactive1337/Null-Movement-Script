@@ -9,47 +9,50 @@ ProcessSetPriority "High"
 A_MaxHotkeysPerInterval := 99000000
 A_HotkeyInterval := 0
 
-; Unified map for key data
-global KeyData := Map(
-    "a", {"sc": "SC01E", "opposite": "d"},
-    "d", {"sc": "SC020", "opposite": "a"},
-    "w", {"sc": "SC011", "opposite": "s"},
-    "s", {"sc": "SC01F", "opposite": "w"}
+; Define keys with their scan codes and states
+global keys := Map(
+    "a", {sc: "SC01E", held: 0, script_state: 0},
+    "d", {sc: "SC020", held: 0, script_state: 0},
+    "w", {sc: "SC011", held: 0, script_state: 0},
+    "s", {sc: "SC01F", held: 0, script_state: 0}
 )
 
-; Function that handles key press or release
-HandleKey(key, isPressed) {
-    opposite := KeyData[key].opposite  ; The opposite key
-    oppositeSC := KeyData[opposite]["sc"] ; Scan code of the opposite key
+; Function to handle key press
+HandleKeyPress(key, oppositeKey) {
+    keys[key].held := 1
+    
+    if (keys[oppositeKey].script_state) {
+        keys[oppositeKey].script_state := 0
+        SendInput "{Blind}{" . keys[oppositeKey].sc . " up}"
+    }
+    
+    keys[key].script_state := 1
+    SendInput "{Blind}{" . keys[key].sc . " down}"
+}
 
-    if (isPressed) {
-        if (KeyData[opposite].script_state) {
-            KeyData[opposite].script_state := 0
-            SendKeyEvent(oppositeSC, "up")
-        }
-        
-        KeyData[key].script_state := 1
-        SendKeyEvent(KeyData[key]["sc"], "down")
-    } else {
-        KeyData[key].script_state := 0
-        SendKeyEvent(KeyData[key]["sc"], "up")
-
-        if (!KeyData[opposite].script_state && GetKeyState(opposite, "P")) {
-            KeyData[opposite].script_state := 1
-            SendKeyEvent(oppositeSC, "down")
-        }
+; Function to handle key release
+HandleKeyRelease(key, oppositeKey) {
+    keys[key].held := 0
+    
+    if (keys[key].script_state) {
+        keys[key].script_state := 0
+        SendInput "{Blind}{" . keys[key].sc . " up}"
+    }
+    
+    if (keys[oppositeKey].held && !keys[oppositeKey].script_state) {
+        keys[oppositeKey].script_state := 1
+        SendInput "{Blind}{" . keys[oppositeKey].sc . " down}"
     }
 }
 
-; Function to send a keyboard event
-SendKeyEvent(scancode, action) {
-    SendInput "{Blind}{" . scancode . " " . action . "}"
-}
+; Hotkeys for A and D
+*SC01E:: HandleKeyPress("a", "d")
+*SC01E up:: HandleKeyRelease("a", "d")
+*SC020:: HandleKeyPress("d", "a")
+*SC020 up:: HandleKeyRelease("d", "a")
 
-; Register hotkeys dynamically
-For key, data in KeyData {
-    Hotkey("*" . data["sc"], Func("HandleKey").Bind(key, 1))
-    Hotkey("*" . data["sc"] . " up", Func("HandleKey").Bind(key, 0))
-}
-
-Return
+; Hotkeys for W and S
+*SC011:: HandleKeyPress("w", "s")
+*SC011 up:: HandleKeyRelease("w", "s")
+*SC01F:: HandleKeyPress("s", "w")
+*SC01F up:: HandleKeyRelease("s", "w")
