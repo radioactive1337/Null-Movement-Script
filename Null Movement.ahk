@@ -64,8 +64,3 @@ HandleKeyRelease(key, oppositeKey) {
 *SC011 up:: HandleKeyRelease("w", "s")
 *SC01F:: HandleKeyPress("s", "w")
 *SC01F up:: HandleKeyRelease("s", "w")
-
-; Error handling and logging function
-LogError(message) {
-    FileAppend "Error: " . message . "`n", "error_log.txt"
-}
