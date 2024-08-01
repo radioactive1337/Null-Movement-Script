@@ -69,11 +69,3 @@ HandleKeyRelease(key, oppositeKey) {
 LogError(message) {
     FileAppend "Error: " . message . "`n", "error_log.txt"
 }
-
-; Example of error handling
-try {
-    ; Your main code here
-}
-catch as err {
-    LogError("An error occurred: " . err.Message)
-}
